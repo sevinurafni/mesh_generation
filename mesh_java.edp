@@ -1,0 +1,48 @@
+load "isoline"
+load "ppm2rnm"
+
+string name="java.pgm";
+real[int,int] Curves(3,1); //to store the isoline points
+int[int] be(1); //to store the begin, end couple of lines
+int nc;// nb of curve 
+{
+	real[int,int] ff1(name); // read  image and set to an rect. array 
+	//  remark (0,0) is the upper, left corner.
+	int nx = ff1.n, ny=ff1.m; 
+	// build a cartesain mesh such that the origne is at the right place.
+	mesh Th=square(nx-1,ny-1,[(nx-1)*(x),(ny-1)*(1-y)]); 
+	// warning  the numbering is of the vertices (x,y) is 
+	// given by $  i = x/nx + nx* y/ny $
+	fespace Vh(Th,P1);
+
+	Vh f1; f1[]=ff1;
+	nc=isoline(Th,f1,iso=0.25,close=0,Curves,beginend=be,smoothing=.005,ratio=0.1);  
+	//cout << "be = " << be << endl;
+}
+
+
+macro GG(i)
+border G#i(t=0,1) 
+{    
+  P=Curve(Curves,be(i*2),be(i*2+1)-1,t);
+  label=i+1;	
+} 
+real lg#i=Curves(2,be(i*2+1)-1);  // END OF MACRO
+
+// number of closed curves
+GG(0) GG(1) GG(2) GG(3) GG(4) GG(5) GG(6) GG(7) GG(8) GG(9) 
+real hh=5;
+
+// For the FreeFem ++ image use these lines because there are 8 closed curves
+func bord = G0(lg0/hh)+G1(lg1/hh)+G2(lg2/hh)+G3(lg3/hh)+G4(lg4/hh)+G5(lg5/hh)+G6(lg6/hh)+G7(lg7/hh)+G8(lg8/hh)+G9(lg9/hh);
+
+
+plot(bord,wait=0);
+
+
+real r=600.0;
+border Gamma0(t=0,2*pi){ x= 350.0 + r *cos(t); y=100.0+r*sin(t);} 
+mesh Th=buildmesh(Gamma0(50)+(bord));
+//mesh Th=buildmesh(bord);
+plot(Th,wait=0);
+plot(Th,wait=0, ps="mesh10.eps");
